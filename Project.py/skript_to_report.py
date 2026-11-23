@@ -1,3 +1,4 @@
+import re
 import requests
 
 url = "https://catalog.onliner.by/sdapi/catalog.api/search/dram"
@@ -9,6 +10,17 @@ params = {
     "dramkit[0]": "ddr4dimm",
     "dramkit[operation]": "union",
 }
+
+
+def get_gb(text: str) -> int | None:
+    kit = re.search(r"(\d+)\s*[xх*]\s*(\d+)\s*ГБ", text, re.IGNORECASE)
+    if kit:
+        return int(kit.group(1)) * int(kit.group(2))
+    single = re.search(r"(\d+)\s*ГБ", text, re.IGNORECASE)
+    if single:
+        return int(single.group(1))
+    return None
+
 
 response = requests.get(url, params=params, headers=headers, timeout=15)
 products = response.json().get("products", [])
@@ -22,4 +34,7 @@ for item in products:
         continue
 
     price = float(prices["price_min"]["amount"])
-    print(f"{item['full_name']} — {price} BYN")
+    volume = get_gb(item.get("description", ""))
+
+    if volume:
+        print(f"{item['full_name']} | {volume} ГБ | {price} BYN")
