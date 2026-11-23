@@ -11,8 +11,15 @@ params = {
 }
 
 response = requests.get(url, params=params, headers=headers, timeout=15)
-print("Статус ответа:", response.status_code)
+products = response.json().get("products", [])
 
-data = response.json()
-print("Всего найдено:", data.get("total"))
-print("Первый товар:", data["products"][0]["full_name"])
+for item in products:
+    prices = item.get("prices")
+    if not prices or not prices.get("price_min"):
+        continue
+
+    if "DDR4" not in item.get("description", ""):
+        continue
+
+    price = float(prices["price_min"]["amount"])
+    print(f"{item['full_name']} — {price} BYN")
